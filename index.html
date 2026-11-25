@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Tiện Ích Đa Năng - Rút gọn Link & Tạo QR</title>
+    <!-- Thư viện tạo mã QR nhẹ, không cần cài đặt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --card-hover: #273549;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #334155;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background: var(--card);
+            padding: 6px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--muted);
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* Card Panel */
+        .panel {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .panel.active {
+            display: block;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        input[type="password"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .row > * {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+            background: var(--primary);
+            width: 100%;
+        }
+
+        .btn:hover { background: var(--primary-hover); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #059669; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover { background: var(--card-hover); }
+
+        /* Result Box */
+        .result-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result-box.show { display: block; }
+
+        .short-url-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .short-url-display a {
+            color: #60a5fa;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .short-url-display a:hover { text-decoration: underline; }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-btns .btn {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        /* QR Preview */
+        .qr-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            gap: 16px;
+        }
+
+        #qrcode {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #qrcode img, #qrcode canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* History */
+        .history-section {
+            margin-top: 24px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-header h3 {
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .history-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+        }
+
+        .history-links {
+            overflow: hidden;
+        }
+
+        .history-links .h-short {
+            color: #60a5fa;
+            font-weight: 600;
+            text-decoration: none;
+            display: block;
+        }
+
+        .history-links .h-long {
+            color: var(--muted);
+            font-size: 0.78rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 360px;
+            display: block;
+        }
+
+        .color-input {
+            height: 44px;
+            width: 100%;
+            padding: 4px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 12px 0 18px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--success);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(15px);
+            pointer-events: none;
+            transition: all 0.25s;
+            z-index: 100;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error { background: var(--danger); }
+
+        footer {
+            margin-top: 28px;
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>⚡ Web Tiện Ích Đa Năng</h1>
+        <p>Rút gọn link, tạo mã QR & công cụ nhanh — chạy trực tiếp trên GitHub Pages</p>
+    </header>
+
+    <!-- Thanh điều hướng Tab -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('shorten', this)">🔗 Rút gọn Link</button>
+        <button class="tab-btn" onclick="switchTab('qr', this)">📱 Tạo mã QR</button>
+        <button class="tab-btn" onclick="switchTab('password', this)">🔐 Tạo Mật khẩu</button>
+    </div>
+
+    <!-- TAB 1: RÚT GỌN LINK -->
+    <div id="tab-shorten" class="panel active">
+        <div class="form-group">
+            <label for="longUrl">Dán đường dẫn (URL) cần rút gọn:</label>
+            <input type="url" id="longUrl" placeholder="https://example.com/duong-dan-rat-dai..." autocomplete="off">
+        </div>
+        <button class="btn" id="shortenBtn" onclick="shortenUrl()">Rút gọn ngay</button>
+
+        <div id="shortenResult" class="result-box">
+            <label>Link đã rút gọn:</label>
+            <div class="short-url-display">
+                <a id="shortLinkOut" href="#" target="_blank" rel="noopener noreferrer"></a>
+            </div>
+            <div class="action-btns">
+                <button class="btn btn-success" onclick="copyText(document.getElementById('shortLinkOut').textContent)">📋 Sao chép</button>
+                <button class="btn btn-outline" onclick="sendToQR()">📱 Tạo QR từ link này</button>
+            </div>
+        </div>
+
+        <div class="history-section" id="historySection" style="display: none;">
+            <div class="history-header">
+                <h3>Lịch sử gần đây</h3>
+                <button class="clear-btn" onclick="clearHistory()">Xóa lịch sử</button>
+            </div>
+            <ul class="history-list" id="historyList"></ul>
+        </div>
+    </div>
+
+    <!-- TAB 2: TẠO MÃ QR -->
+    <div id="tab-qr" class="panel">
+        <div class="form-group">
+            <label for="qrType">Loại nội dung:</label>
+            <select id="qrType" onchange="toggleQrInputs()">
+                <option value="text">Đường dẫn (URL) / Văn bản</option>
+                <option value="wifi">Kết nối Wi-Fi</option>
+            </select>
+        </div>
+
+        <div id="qrTextInput" class="form-group">
+            <label for="qrContent">Nhập link hoặc văn bản:</label>
+            <input type="text" id="qrContent" placeholder="https://github.com/..." value="https://github.com">
+        </div>
+
+        <div id="qrWifiInputs" style="display: none;">
+            <div class="row">
+                <div class="form-group">
+                    <label for="wifiSsid">Tên Wi-Fi (SSID):</label>
+                    <input type="text" id="wifiSsid" placeholder="Ten_WiFi_Nha_Ban">
+                </div>
+                <div class="form-group">
+                    <label for="wifiPass">Mật khẩu Wi-Fi:</label>
+                    <input type="text" id="wifiPass" placeholder="MatKhau123">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="wifiEnc">Chuẩn bảo mật:</label>
+                <select id="wifiEnc">
+                    <option value="WPA">WPA / WPA2 / WPA3</option>
+                    <option value="WEP">WEP</option>
+                    <option value="nopass">Không mật khẩu</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row form-group">
+            <div>
+                <label for="qrColor">Màu mã QR:</label>
+                <input type="color" id="qrColor" class="color-input" value="#000000">
+            </div>
+            <div>
+                <label for="qrBg">Màu nền:</label>
+                <input type="color" id="qrBg" class="color-input" value="#ffffff">
+            </div>
+            <div>
+                <label for="qrSize">Kích thước (px):</label>
+                <select id="qrSize">
+                    <option value="200">200 x 200</option>
+                    <option value="256" selected>256 x 256</option>
+                    <option value="320">320 x 320</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn" onclick="generateQR()">Tạo mã QR</button>
+
+        <div class="qr-wrapper" id="qrWrapper" style="display: none;">
+            <div id="qrcode"></div>
+            <button class="btn btn-success" style="max-width: 260px;" onclick="downloadQR()">⬇️ Tải xuống ảnh PNG</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: TẠO MẬT KHẨU -->
+    <div id="tab-password" class="panel">
+        <div class="form-group">
+            <label for="passLength">Độ dài mật khẩu: <strong id="passLenVal">16</strong> ký tự</label>
+            <input type="range" id="passLength" min="8" max="64" value="16" style="width: 100%;"
+                   oninput="document.getElementById('passLenVal').textContent = this.value">
+        </div>
+
+        <div class="checkbox-group">
+            <label><input type="checkbox" id="optUpper" checked> Chữ hoa (A-Z)</label>
+            <label><input type="checkbox" id="optLower" checked> Chữ thường (a-z)</label>
+            <label><input type="checkbox" id="optNum" checked> Số (0-9)</label>
+            <label><input type="checkbox" id="optSym" checked> Ký tự đặc biệt (!@#$)</label>
+        </div>
+
+        <button class="btn" onclick="generatePassword()">Tạo mật khẩu ngẫu nhiên</button>
+
+        <div id="passResult" class="result-box">
+            <label>Mật khẩu của bạn:</label>
+            <div class="short-url-display">
+                <code id="passOutput" style="font-size: 1.1rem; color: #34d399; word-break: break-all;"></code>
+            </div>
+            <div class="action-btns">
+                <button class="btn btn-success" onclick="copyText(document.getElementById('passOutput').textContent)">📋 Sao chép</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Hoạt động 100% trên trình duyệt • Lưu trữ bằng GitHub Pages
+    </footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+    // --- ĐIỀU HƯỚNG TAB ---
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // --- THÔNG BÁO TOAST ---
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = 'toast show' + (isError ? ' error' : '');
+        setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    // --- SAO CHÉP CLIPBOARD ---
+    async function copyText(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Đã sao chép vào bộ nhớ tạm!');
+        } catch {
+            showToast('Không thể sao chép tự động.', true);
+        }
+    }
+
+    // --- TÍNH NĂNG 1: RÚT GỌN LINK ---
+    function shortenWithIsGd(longUrl) {
+        return new Promise((resolve, reject) => {
+            const cbName = 'isgd_cb_' + Date.now();
+            const script = document.createElement('script');
+            window[cbName] = (data) => {
+                delete window[cbName];
+                script.remove();
+                if (data.shorturl) resolve(data.shorturl);
+                else reject(new Error(data.errormessage || 'Lỗi rút gọn link'));
+            };
+            script.onerror = () => {
+                delete window[cbName];
+                script.remove();
+                reject(new Error('Không kết nối được máy chủ is.gd'));
+            };
+            script.src = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}&callback=${cbName}`;
+            document.body.appendChild(script);
+        });
+    }
+
+    async function shortenUrl() {
+        const input = document.getElementById('longUrl');
+        let url = input.value.trim();
+        if (!url) return showToast('Vui lòng nhập đường dẫn!', true);
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+        const btn = document.getElementById('shortenBtn');
+        btn.disabled = true;
+        btn.textContent = 'Đang xử lý...';
+
+        try {
+            let shortUrl = '';
+            // Thử TinyURL trước, nếu lỗi CORS/mạng thì tự động chuyển sang is.gd (JSONP)
+            try {
+                const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+                if (!res.ok) throw new Error();
+                shortUrl = await res.text();
+            } catch {
+                shortUrl = await shortenWithIsGd(url);
+            }
+
+            const out = document.getElementById('shortLinkOut');
+            out.href = shortUrl;
+            out.textContent = shortUrl;
+            document.getElementById('shortenResult').classList.add('show');
+
+            saveHistory(url, shortUrl);
+            showToast('Rút gọn link thành công!');
+        } catch (err) {
+            showToast('Không thể rút gọn link này. Hãy kiểm tra lại URL.', true);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Rút gọn ngay';
+        }
+    }
+
+    function sendToQR() {
+        const shortLink = document.getElementById('shortLinkOut').textContent;
+        document.getElementById('qrType').value = 'text';
+        toggleQrInputs();
+        document.getElementById('qrContent').value = shortLink;
+        switchTab('qr', document.querySelectorAll('.tab-btn')[1]);
+        generateQR();
+    }
+
+    // Lưu & hiển thị lịch sử
+    function saveHistory(longUrl, shortUrl) {
+        const history = JSON.parse(localStorage.getItem('short_history') || '[]');
+        history.unshift({ longUrl, shortUrl });
+        localStorage.setItem('short_history', JSON.stringify(history.slice(0, 8)));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('short_history') || '[]');
+        const section = document.getElementById('historySection');
+        const list = document.getElementById('historyList');
+        if (!history.length) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = 'block';
+        list.innerHTML = history.map(item => `
+            <li class="history-item">
+                <div class="history-links">
+                    <a class="h-short" href="${item.shortUrl}" target="_blank">${item.shortUrl}</a>
+                    <span class="h-long" title="${item.longUrl}">${item.longUrl}</span>
+                </div>
+                <button class="btn btn-outline" style="width:auto; padding:6px 10px; font-size:0.8rem;"
+                        onclick="copyText('${item.shortUrl}')">Copy</button>
+            </li>
+        `).join('');
+    }
+
+    function clearHistory() {
+        localStorage.removeItem('short_history');
+        renderHistory();
+        showToast('Đã xóa lịch sử.');
+    }
+
+    // --- TÍNH NĂNG 2: TẠO MÃ QR ---
+    function toggleQrInputs() {
+        const isWifi = document.getElementById('qrType').value === 'wifi';
+        document.getElementById('qrTextInput').style.display = isWifi ? 'none' : 'block';
+        document.getElementById('qrWifiInputs').style.display = isWifi ? 'block' : 'none';
+    }
+
+    function generateQR() {
+        const type = document.getElementById('qrType').value;
+        let data = '';
+
+        if (type === 'wifi') {
+            const ssid = document.getElementById('wifiSsid').value.trim();
+            const pass = document.getElementById('wifiPass').value;
+            const enc = document.getElementById('wifiEnc').value;
+            if (!ssid) return showToast('Vui lòng nhập tên Wi-Fi!', true);
+            data = `WIFI:T:${enc};S:${ssid};P:${pass};;`;
+        } else {
+            data = document.getElementById('qrContent').value.trim();
+            if (!data) return showToast('Vui lòng nhập nội dung tạo QR!', true);
+        }
+
+        const size = parseInt(document.getElementById('qrSize').value, 10);
+        const colorDark = document.getElementById('qrColor').value;
+        const colorLight = document.getElementById('qrBg').value;
+
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = '';
+        qrContainer.style.background = colorLight;
+
+        new QRCode(qrContainer, {
+            text: data,
+            width: size,
+            height: size,
+            colorDark: colorDark,
+            colorLight: colorLight,
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        document.getElementById('qrWrapper').style.display = 'flex';
+        showToast('Đã tạo mã QR!');
+    }
+
+    function downloadQR() {
+        const qrContainer = document.getElementById('qrcode');
+        const canvas = qrContainer.querySelector('canvas');
+        const img = qrContainer.querySelector('img');
+        const bg = document.getElementById('qrBg').value;
+
+        const source = canvas || img;
+        if (!source) return;
+
+        // Vẽ thêm viền 16px xung quanh để camera điện thoại dễ quét hơn
+        const pad = 16;
+        const outCanvas = document.createElement('canvas');
+        const w = source.width || 256;
+        const h = source.height || 256;
+        outCanvas.width = w + pad * 2;
+        outCanvas.height = h + pad * 2;
+
+        const ctx = outCanvas.getContext('2d');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+        ctx.drawImage(source, pad, pad, w, h);
+
+        const link = document.createElement('a');
+        link.download = `qrcode-${Date.now()}.png`;
+        link.href = outCanvas.toDataURL('image/png');
+        link.click();
+    }
+
+    // --- TÍNH NĂNG 3: TẠO MẬT KHẨU ---
+    function generatePassword() {
+        const len = parseInt(document.getElementById('passLength').value, 10);
+        let chars = '';
+        if (document.getElementById('optUpper').checked) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if (document.getElementById('optLower').checked) chars += 'abcdefghijklmnopqrstuvwxyz';
+        if (document.getElementById('optNum').checked) chars += '0123456789';
+        if (document.getElementById('optSym').checked) chars += '!@#$%^&*()-_=+[]{}|;:,.<>?';
+
+        if (!chars) return showToast('Hãy chọn ít nhất 1 loại ký tự!', true);
+
+        const array = new Uint32Array(len);
+        crypto.getRandomValues(array);
+        let password = '';
+        for (let i = 0; i < len; i++) {
+            password += chars[array[i] % chars.length];
+        }
+
+        document.getElementById('passOutput').textContent = password;
+        document.getElementById('passResult').classList.add('show');
+    }
+
+    // Khởi tạo lịch sử khi mở trang
+    renderHistory();
+</script>
+</body>
+</html>
